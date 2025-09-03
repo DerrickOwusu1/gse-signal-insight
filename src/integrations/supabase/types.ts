@@ -134,14 +134,15 @@ export type Database = {
       }
       profiles: {
         Row: {
-          api_key: string | null
           created_at: string
+          data_protection_level: string | null
           data_refresh_interval: string | null
           email_alerts: boolean | null
           full_name: string | null
           id: string
           location: string | null
           phone: string | null
+          phone_hash: string | null
           sms_alerts: boolean | null
           telegram_alerts: boolean | null
           telegram_chat_id: string | null
@@ -150,14 +151,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          api_key?: string | null
           created_at?: string
+          data_protection_level?: string | null
           data_refresh_interval?: string | null
           email_alerts?: boolean | null
           full_name?: string | null
           id?: string
           location?: string | null
           phone?: string | null
+          phone_hash?: string | null
           sms_alerts?: boolean | null
           telegram_alerts?: boolean | null
           telegram_chat_id?: string | null
@@ -166,20 +168,54 @@ export type Database = {
           user_id: string
         }
         Update: {
-          api_key?: string | null
           created_at?: string
+          data_protection_level?: string | null
           data_refresh_interval?: string | null
           email_alerts?: boolean | null
           full_name?: string | null
           id?: string
           location?: string | null
           phone?: string | null
+          phone_hash?: string | null
           sms_alerts?: boolean | null
           telegram_alerts?: boolean | null
           telegram_chat_id?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          sensitive_data_accessed: string[] | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          sensitive_data_accessed?: string[] | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          sensitive_data_accessed?: string[] | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -316,6 +352,36 @@ export type Database = {
           },
         ]
       }
+      user_api_keys: {
+        Row: {
+          created_at: string
+          encrypted_api_key: string
+          id: string
+          is_active: boolean
+          key_name: string
+          last_used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_api_key: string
+          id?: string
+          is_active?: boolean
+          key_name?: string
+          last_used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_api_key?: string
+          id?: string
+          is_active?: boolean
+          key_name?: string
+          last_used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlists: {
         Row: {
           created_at: string
@@ -350,7 +416,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_api_key: {
+        Args: { key_name_param?: string }
+        Returns: string
+      }
+      hash_phone_number: {
+        Args: { phone_input: string }
+        Returns: string
+      }
+      log_sensitive_access: {
+        Args: {
+          action_param: string
+          data_accessed: string[]
+          table_param: string
+        }
+        Returns: undefined
+      }
+      store_user_api_key: {
+        Args: { api_key_param: string; key_name_param?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
