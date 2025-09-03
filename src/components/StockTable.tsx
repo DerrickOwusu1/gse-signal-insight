@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TierBadge } from "@/components/TierBadge";
+import { MiniPriceChart } from "@/components/MiniPriceChart";
 import { ArrowUpDown, TrendingUp, TrendingDown, Plus, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -209,19 +210,11 @@ export function StockTable({ stocks, title = "Stocks", showAddToWatchlist = true
                       {formatCurrency(stock.current_price)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className={cn(
-                        "flex items-center justify-end space-x-1",
-                        isPositive ? "text-tier-a" : "text-tier-c"
-                      )}>
-                        {isPositive ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        <span className="text-xs">
-                          {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
-                        </span>
-                      </div>
+                      <MiniPriceChart 
+                        data={[]}
+                        currentPrice={stock.current_price}
+                        previousClose={stock.previous_close}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       {formatVolume(stock.volume)}

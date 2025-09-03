@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TierBadge } from "@/components/TierBadge";
+import { PriceChart } from "@/components/PriceChart";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -165,18 +166,14 @@ export default function StockDetail() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Price Chart Placeholder */}
+          {/* Interactive Price Chart */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Price Chart</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">Price chart will be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <PriceChart 
+              stockId={stock.id}
+              ticker={stock.ticker}
+              currentPrice={stock.current_price}
+              previousClose={stock.previous_close}
+            />
           </div>
 
           {/* Fundamental Metrics */}

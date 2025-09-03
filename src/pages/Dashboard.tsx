@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { StockTable } from "@/components/StockTable";
+import { DashboardCharts } from "@/components/DashboardCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/TierBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,6 +186,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Interactive Charts */}
+        <DashboardCharts stocks={stocks} />
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Top Stocks */}
