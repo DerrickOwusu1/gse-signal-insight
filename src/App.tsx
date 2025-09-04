@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import StockDetail from "./pages/StockDetail";
 import Watchlist from "./pages/Watchlist";
 import Portfolio from "./pages/Portfolio";
+import Backtesting from "./pages/Backtesting";
 import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 
@@ -62,9 +63,7 @@ const App = () => (
             } />
             <Route path="/backtesting" element={
               <ProtectedRoute>
-                <div className="min-h-screen flex items-center justify-center">
-                  <p className="text-lg">Backtesting page coming soon...</p>
-                </div>
+                <Backtesting />
               </ProtectedRoute>
             } />
             <Route path="/settings" element={
