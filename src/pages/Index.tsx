@@ -8,11 +8,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
-    }
-  }, [user, loading, navigate]);
+  // Remove auto-redirect to dashboard to allow browsing without auth
 
   if (loading) {
     return (
@@ -49,7 +45,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" asChild>
-                  <a href="/auth">Get Started</a>
+                  <a href="/dashboard">Explore Dashboard</a>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
                   <a href="/auth">Sign In</a>

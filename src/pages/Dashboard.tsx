@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { Layout } from "@/components/Layout";
+import { useState, useEffect } from "react";
 import { StockTable } from "@/components/StockTable";
 import { DashboardCharts } from "@/components/DashboardCharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TierBadge } from "@/components/TierBadge";
+import { AlertsManager } from "@/components/AlertsManager";
+import { Layout } from "@/components/Layout";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, DollarSign, Activity, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Stock {
   id: string;
@@ -25,216 +25,98 @@ interface Stock {
   tier: 'A' | 'B' | 'C';
 }
 
-interface Alert {
-  id: string;
-  trigger_type: string;
-  tier: 'A' | 'B' | 'C';
-  price: number;
-  rationale: string;
-  created_at: string;
-  stock: {
-    ticker: string;
-    company_name: string;
-  };
-}
-
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stocks, setStocks] = useState<Stock[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchStocks();
   }, []);
 
-  const fetchData = async () => {
+  const fetchStocks = async () => {
     try {
-      // Fetch top stocks
-      const { data: stocksData, error: stocksError } = await supabase
+      const { data, error } = await supabase
         .from('stocks')
         .select('*')
         .eq('is_active', true)
-        .order('score', { ascending: false })
-        .limit(20);
+        .order('score', { ascending: false });
 
-      if (stocksError) throw stocksError;
-
-      // Fetch recent alerts
-      const { data: alertsData, error: alertsError } = await supabase
-        .from('alerts')
-        .select(`
-          *,
-          stock:stocks(ticker, company_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (alertsError) throw alertsError;
-
-      setStocks((stocksData as Stock[]) || []);
-      setAlerts((alertsData as Alert[]) || []);
+      if (error) throw error;
+      setStocks((data || []) as Stock[]);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching stocks:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const totalStocks = stocks.length;
-  const alertsToday = alerts.filter(alert => 
-    new Date(alert.created_at).toDateString() === new Date().toDateString()
-  ).length;
-
-  const gseCompositeIndex = 2847.32; // Mock GSE Composite Index
-  const totalMarketCap = stocks.reduce((sum, stock) => sum + stock.market_cap, 0);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GH', {
-      style: 'currency',
-      currency: 'GHS',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
-
-  const formatLargeNumber = (value: number) => {
-    if (value >= 1e9) {
-      return `₵${(value / 1e9).toFixed(1)}B`;
-    } else if (value >= 1e6) {
-      return `₵${(value / 1e6).toFixed(1)}M`;
-    }
-    return formatCurrency(value);
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-      return `${diffInMinutes}m ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d ago`;
-    }
-  };
-
   if (loading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading dashboard...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading market data...</p>
         </div>
-      </Layout>
+      </div>
+    );
+  }
+
+  // Show simplified layout for non-authenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card">
+          <div className="flex h-16 items-center px-6">
+            <div className="flex items-center space-x-4">
+              <a href="/" className="flex items-center space-x-2">
+                <BarChart3 className="h-8 w-8 text-primary" />
+                <span className="text-xl font-bold">VolumeSignal</span>
+              </a>
+            </div>
+            <div className="ml-auto">
+              <Button asChild>
+                <a href="/auth">Sign In</a>
+              </Button>
+            </div>
+          </div>
+        </header>
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">GSE Market Overview</h1>
+            <p className="text-muted-foreground">Live Ghana Stock Exchange data</p>
+          </div>
+          
+          <DashboardCharts stocks={stocks} />
+          
+          <div className="mt-8">
+            <StockTable stocks={stocks} />
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <Layout>
-      <div className="space-y-6 p-6">
-        {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">GSE Stocks Monitored</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalStocks}</div>
-              <p className="text-xs text-muted-foreground">
-                Active stocks tracked
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Alerts Today</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{alertsToday}</div>
-              <p className="text-xs text-muted-foreground">
-                New alerts generated
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">GSE Composite Index</CardTitle>
-              <TrendingUp className="h-4 w-4 text-tier-a" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{gseCompositeIndex.toFixed(2)}</div>
-              <p className="text-xs text-tier-a">
-                +1.2% from yesterday
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Market Cap</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatLargeNumber(totalMarketCap)}</div>
-              <p className="text-xs text-muted-foreground">
-                Combined market value
-              </p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Monitor Ghana Stock Exchange activity</p>
         </div>
-
-        {/* Interactive Charts */}
-        <DashboardCharts stocks={stocks} />
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Top Stocks */}
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
-            <StockTable 
-              stocks={stocks.slice(0, 10)} 
-              title="Top-Ranked Stocks"
-            />
+            <DashboardCharts stocks={stocks} />
           </div>
-
-          {/* Alerts Feed */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Alerts</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {alerts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No recent alerts</p>
-                ) : (
-                  alerts.map((alert) => (
-                    <div key={alert.id} className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                      <TierBadge tier={alert.tier} className="mt-1" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium truncate">
-                            {alert.stock.ticker}
-                          </p>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {formatTimeAgo(alert.created_at)}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {alert.trigger_type} • {formatCurrency(alert.price)}
-                        </p>
-                        <p className="text-xs text-foreground">
-                          {alert.rationale}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+          <div className="lg:col-span-1">
+            <AlertsManager />
           </div>
+        </div>
+        
+        <div className="mt-8">
+          <StockTable stocks={stocks} />
         </div>
       </div>
     </Layout>

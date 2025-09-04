@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import StockDetail from "./pages/StockDetail";
 import Watchlist from "./pages/Watchlist";
+import Portfolio from "./pages/Portfolio";
 import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 
@@ -42,16 +43,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/stock/:ticker" element={
-              <ProtectedRoute>
-                <StockDetail />
-              </ProtectedRoute>
-            } />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/stock/:ticker" element={<StockDetail />} />
             <Route path="/watchlist" element={
               <ProtectedRoute>
                 <Watchlist />
@@ -59,7 +52,7 @@ const App = () => (
             } />
             <Route path="/portfolio" element={
               <ProtectedRoute>
-                <Watchlist />
+                <Portfolio />
               </ProtectedRoute>
             } />
             <Route path="/alerts" element={
